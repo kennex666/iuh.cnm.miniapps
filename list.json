@@ -1,0 +1,23 @@
+[
+    {
+        "id": "1",
+        "app_name": "iBanking",
+        "description": "Ngân hàng số với nhiều tính năng tiện ích",
+        "icon": "https://example.com/icons/ibanking.png",
+        "url": "https://pj.io.vn/iuh.cnm.miniapps/ibanking"
+    },
+    {
+        "id": "2",
+        "app_name": "iShop",
+        "description": "Mua sắm trực tuyến với nhiều ưu đãi",
+        "icon": "https://example.com/icons/eshop.png",
+        "url": "https://pj.io.vn/iuh.cnm.miniapps/ishop"
+    },
+    {
+        "id": "3",
+        "app_name": "iDelivery",
+        "description": "Giao đồ ăn nhanh chóng và tiện lợi",
+        "icon": "https://example.com/icons/food_delivery.png",
+        "url": "https://pj.io.vn/iuh.cnm.miniapps/igrab"
+    }
+]

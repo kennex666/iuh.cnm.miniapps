@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>iBanking Mockup</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+		}
+	</style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen flex items-center justify-center">
+	<!-- Loading -->
+	<div id="loading" class="text-center text-blue-600 text-lg font-semibold animate-pulse">
+		🔐 Đang xác thực tài khoản...
+	</div>
+
+	<!-- Trang chính -->
+	<div id="main" class="hidden w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6">
+		<!-- Thông tin người dùng -->
+		<div class="flex items-center space-x-4">
+			<img id="avatar" src="" class="w-16 h-16 rounded-full border-4 border-blue-200 shadow" />
+			<div>
+				<p class="text-xl font-bold text-gray-900" id="username">Tên</p>
+				<p class="text-sm text-gray-500">Số tài khoản: <span id="account">...</span></p>
+			</div>
+		</div>
+
+		<!-- Các tính năng chính -->
+		<div class="grid grid-cols-4 gap-4 text-center text-xs text-gray-700">
+			<button onclick="showTransferForm()" class="flex flex-col items-center hover:text-blue-600 transition">
+				<i class="fas fa-paper-plane text-lg mb-1"></i>
+				<span>Chuyển</span>
+			</button>
+			<div class="flex flex-col items-center">
+				<i class="fas fa-piggy-bank text-lg mb-1"></i>
+				<span>Tiết kiệm</span>
+			</div>
+			<div class="flex flex-col items-center">
+				<i class="fas fa-file-invoice-dollar text-lg mb-1"></i>
+				<span>Hoá đơn</span>
+			</div>
+			<div class="flex flex-col items-center">
+				<i class="fas fa-hand-holding-usd text-lg mb-1"></i>
+				<span>Vay</span>
+			</div>
+		</div>
+
+		<!-- Dịch vụ tiện ích -->
+		<div>
+			<h4 class="text-sm font-semibold text-gray-600 mb-2">Dịch vụ tiện ích</h4>
+			<div class="grid grid-cols-3 gap-4 text-center text-sm text-gray-600">
+				<div class="hover:bg-gray-100 p-2 rounded-xl">
+					<i class="fas fa-wallet text-base mb-1"></i>
+					<p>Ví điện tử</p>
+				</div>
+				<div class="hover:bg-gray-100 p-2 rounded-xl">
+					<i class="fas fa-bolt text-base mb-1"></i>
+					<p>Điện</p>
+				</div>
+				<div class="hover:bg-gray-100 p-2 rounded-xl">
+					<i class="fas fa-tint text-base mb-1"></i>
+					<p>Nước</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Banner quảng cáo -->
+		<div class="rounded-xl overflow-hidden shadow mt-4">
+			<img src="https://via.placeholder.com/400x120.png?text=VPBank+Ưu+Đãi" class="w-full" />
+		</div>
+	</div>
+
+	<!-- Giao diện chuyển tiền -->
+	<div id="transfer" class="hidden w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6">
+		<h3 class="text-2xl font-bold text-blue-600 text-center">Chuyển tiền</h3>
+		<form onsubmit="submitTransfer(event)" class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Người nhận</label>
+				<input id="receiver" type="text" placeholder="Tên người nhận" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Số tiền (VND)</label>
+				<input id="amount" type="number" placeholder="VD: 500000" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" required />
+			</div>
+			<button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition">
+				Gửi tiền
+			</button>
+		</form>
+		<button onclick="goBack()" class="text-sm text-blue-500 underline">← Quay lại</button>
+		<div id="result" class="text-green-600 text-center font-medium hidden mt-2"></div>
+	</div>
+
+	<script>
+		function initUser(data) {
+			const { name, phone, avatarURL } = data;
+			setTimeout(() => {
+				document.getElementById("loading").classList.add("hidden");
+				document.getElementById("main").classList.remove("hidden");
+				document.getElementById("username").innerText = name;
+				document.getElementById("account").innerText = phone;
+				document.getElementById("avatar").src = avatarURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
+				window.USER = { name, phone };
+			}, 1000);
+		}
+
+		function showTransferForm() {
+			document.getElementById("main").classList.add("hidden");
+			document.getElementById("transfer").classList.remove("hidden");
+		}
+
+		function goBack() {
+			document.getElementById("transfer").classList.add("hidden");
+			document.getElementById("main").classList.remove("hidden");
+		}
+
+		function submitTransfer(e) {
+			e.preventDefault();
+			const receiver = document.getElementById("receiver").value;
+			const amount = document.getElementById("amount").value;
+			document.getElementById("result").innerText = `\u2705 Đã chuyển ${amount} VND cho ${receiver}`;
+			document.getElementById("result").classList.remove("hidden");
+		}
+
+		window.onload = function () {
+			window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "READY" }));
+			window.addEventListener("message", function (event) {
+				try {
+					const data = event.data;
+					initUser(data);
+				} catch (e) {
+					console.warn("Lỗi khi parse message:", event.data);
+				}
+			});
+		};
+	</script>
+</body>
+</html>

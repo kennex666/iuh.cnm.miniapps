@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Mini Shop</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+		}
+	</style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-pink-50 min-h-screen flex items-center justify-center">
+
+	<!-- Loading -->
+	<div id="loading" class="text-center text-pink-600 text-lg font-semibold animate-pulse">
+		🛍️ Đang tải cửa hàng...
+	</div>
+
+	<!-- Màn chính -->
+	<div id="main" class="hidden w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6">
+		<!-- Header -->
+		<div class="flex items-center justify-between">
+			<div class="flex items-center space-x-4">
+				<img id="avatar" src="" class="w-12 h-12 rounded-full border-4 border-pink-200 shadow" />
+				<div>
+					<p class="text-lg font-bold text-gray-900" id="username">Tên</p>
+					<p class="text-xs text-gray-500">SĐT: <span id="account">...</span></p>
+				</div>
+			</div>
+			<div class="space-x-2">
+				<button onclick="showCart()" class="text-pink-600 text-sm hover:underline">
+					<i class="fas fa-shopping-cart"></i> Giỏ hàng
+				</button>
+				<button onclick="showSellForm()" class="text-green-600 text-sm hover:underline">
+					<i class="fas fa-plus-circle"></i> Đăng bán
+				</button>
+			</div>
+		</div>
+
+		<!-- Danh sách sản phẩm -->
+		<div>
+			<h3 class="text-base font-semibold text-gray-700 mb-2">Sản phẩm nổi bật</h3>
+			<div id="product-list" class="space-y-4"></div>
+		</div>
+	</div>
+
+	<!-- Giao diện giỏ hàng -->
+	<div id="cart" class="hidden w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6">
+		<h3 class="text-2xl font-bold text-pink-600 text-center">🛒 Giỏ hàng</h3>
+		<ul id="cart-items" class="text-sm text-gray-700 space-y-2"></ul>
+		<p class="text-right font-bold text-gray-800">Tổng: <span id="cart-total">0</span> VND</p>
+		<button onclick="goBack()" class="text-sm text-pink-500 underline">← Tiếp tục mua sắm</button>
+	</div>
+
+	<!-- Giao diện đăng bán -->
+	<div id="sell" class="hidden w-full max-w-md bg-white rounded-3xl shadow-xl p-6 space-y-6">
+		<h3 class="text-2xl font-bold text-green-600 text-center">📤 Đăng sản phẩm</h3>
+		<form onsubmit="submitProduct(event)" class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
+				<input id="productName" type="text" placeholder="VD: Áo hoodie local brand"
+					class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500"
+					required />
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-gray-700">Giá (VND)</label>
+				<input id="productPrice" type="number" placeholder="VD: 150000"
+					class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500"
+					required />
+			</div>
+			<div class="space-y-2">
+                <p class="text-sm font-medium text-gray-700">Hình ảnh minh hoạ</p>
+                <button type="button" onclick="requestCameraPermission()"
+                    class="w-full bg-white border border-green-400 text-green-600 font-semibold py-1 rounded hover:bg-green-50">
+                    <i class="fas fa-camera"></i> Chọn hình ảnh
+                </button>
+                <div id="imageStatus" class="text-xs text-gray-500 italic">Chưa chọn hình</div>
+                <img id="previewImage" class="w-full rounded-lg mt-2 hidden" />
+            </div>
+
+			<button type="submit"
+				class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition">
+				Đăng bán
+			</button>
+		</form>
+		<button onclick="goBack()" class="text-sm text-green-500 underline">← Quay lại</button>
+	</div>
+
+	<script>
+		const products = [
+			{ id: 1, name: "Áo phông basic", price: 120000 },
+			{ id: 2, name: "Túi tote canvas", price: 90000 },
+			{ id: 3, name: "Mũ lưỡi trai trẻ trung", price: 75000 }
+		];
+
+		let cart = [];
+		let hasPermission = false;
+
+		function initUser(data) {
+			const { name, phone, avatarURL } = data;
+			setTimeout(() => {
+				document.getElementById("loading").classList.add("hidden");
+				document.getElementById("main").classList.remove("hidden");
+				document.getElementById("username").innerText = name;
+				document.getElementById("account").innerText = phone;
+				document.getElementById("avatar").src = avatarURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
+				renderProducts();
+			}, 1000);
+		}
+
+        function requestCameraPermission() {
+            window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "REQUIRE_PERMISSIONS", data: "camera" }));
+            document.getElementById("imageStatus").innerText = "Đang yêu cầu quyền truy cập camera...";
+        }
+
+        // Hàm gọi chọn file ảnh khi đã được cấp quyền
+        function triggerCameraFileInput() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.capture = "environment"; // Ưu tiên camera sau
+            input.onchange = () => {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById("previewImage");
+                    img.src = e.target.result;
+                    img.classList.remove("hidden");
+                    document.getElementById("imageStatus").innerText = "✅ Hình ảnh đã được chọn";
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+
+
+		function renderProducts() {
+			const container = document.getElementById("product-list");
+			container.innerHTML = "";
+			products.forEach(p => {
+				const item = document.createElement("div");
+				item.className = "flex justify-between items-center p-4 bg-gray-50 rounded-lg shadow";
+				item.innerHTML = `
+					<div>
+						<p class="font-semibold">${p.name}</p>
+						<p class="text-xs text-gray-500">${p.price.toLocaleString()} VND</p>
+					</div>
+					<button onclick="addToCart(${p.id})" class="bg-pink-500 hover:bg-pink-600 text-white text-xs px-3 py-1 rounded">
+						Thêm
+					</button>
+				`;
+				container.appendChild(item);
+			});
+		}
+
+		function addToCart(productId) {
+			const product = products.find(p => p.id === productId);
+			cart.push(product);
+			alert(`Đã thêm ${product.name} vào giỏ hàng!`);
+		}
+
+		function showCart() {
+			document.getElementById("main").classList.add("hidden");
+			document.getElementById("cart").classList.remove("hidden");
+			renderCart();
+		}
+
+		function renderCart() {
+			const list = document.getElementById("cart-items");
+			const total = document.getElementById("cart-total");
+			list.innerHTML = "";
+			let sum = 0;
+
+			if (cart.length === 0) {
+				list.innerHTML = "<li class='text-center text-gray-500'>Chưa có sản phẩm nào</li>";
+			} else {
+				cart.forEach((item, index) => {
+					const li = document.createElement("li");
+					li.innerText = `${index + 1}. ${item.name} - ${item.price.toLocaleString()} VND`;
+					list.appendChild(li);
+					sum += item.price;
+				});
+			}
+			total.innerText = sum.toLocaleString();
+		}
+
+		function goBack() {
+			document.getElementById("cart").classList.add("hidden");
+			document.getElementById("sell").classList.add("hidden");
+			document.getElementById("main").classList.remove("hidden");
+		}
+
+		function showSellForm() {
+			document.getElementById("main").classList.add("hidden");
+			document.getElementById("sell").classList.remove("hidden");
+		}
+
+		function requestCameraPermission() {
+			window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "REQUIRE_PERMISSIONS", data: "camera" }));
+			document.getElementById("imageStatus").innerText = "Đang yêu cầu quyền truy cập camera...";
+		}
+
+		function submitProduct(e) {
+			e.preventDefault();
+			if (!hasPermission) {
+				alert("⚠️ Bạn chưa chọn hình ảnh hoặc chưa cấp quyền camera!");
+				return;
+			}
+			const name = document.getElementById("productName").value;
+			const price = parseInt(document.getElementById("productPrice").value);
+			products.push({ id: products.length + 1, name, price });
+			alert("✅ Đăng sản phẩm thành công!");
+			goBack();
+			renderProducts();
+		}
+
+		window.onload = function () {
+			window.ReactNativeWebView?.postMessage(JSON.stringify({ type: "READY" }));
+		};
+
+        
+
+		window.addEventListener("message", function (event) {
+            try {
+                const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+
+                if (data?.type === "ACCEPT_PERMISSIONS" && data.data.permission === "camera") {
+                    hasPermission = true;
+                    document.getElementById("imageStatus").innerText = "✅ Đã cấp quyền truy cập camera.";
+                    // Sau khi cấp quyền thì gọi hàm mở file input
+                    triggerCameraFileInput();
+                } else if (data?.type === "DENY_PERMISSIONS") {
+                    hasPermission = false;
+                    document.getElementById("imageStatus").innerText = "❌ Quyền bị từ chối.";
+                    document.getElementById("previewImage").classList.add("hidden");
+                } else {
+                    initUser(data);
+                }
+            } catch (e) {
+                console.warn("Lỗi khi parse message:", event.data);
+            }
+        });
+
+	</script>
+</body>
+</html>
